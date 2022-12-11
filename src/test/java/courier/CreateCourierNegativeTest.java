@@ -2,18 +2,21 @@ package courier;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import org.junit.Before;
+import org.courier.CourierChecks;
+import org.courier.CourierClient;
+import org.courier.Profile;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 @RunWith(Parameterized.class)
 public class CreateCourierNegativeTest {
+
+    private final CourierClient client = new CourierClient();
+    private final CourierChecks check = new CourierChecks();
     @Parameterized.Parameter()
     public String login;
 
@@ -28,11 +31,6 @@ public class CreateCourierNegativeTest {
 
     @Parameterized.Parameter(4)
     public String message;
-
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
-    }
 
     @Parameterized.Parameters(name = "login: {0}, password: {1}, firstName: {2}, statusCode: {3}, message: {4}")
     public static Object[][] params() {
@@ -51,8 +49,8 @@ public class CreateCourierNegativeTest {
     public void testCheckUserNameAndPrintResponseBody() {
 
         Profile profile = new Profile(login, password, firstName);
-        Response response = given().log().all().contentType(ContentType.JSON).body(profile).when().post("/api/v1/courier");
-        response.then().log().all().statusCode(statusCode).assertThat().body("message",equalTo(message));
-        System.out.println(response.body().asString());
+        var response = client.create(profile);
+        var messageResponse = check.creationFailed(response, statusCode);
+        assertThat(messageResponse, containsString(message));
     }
 }

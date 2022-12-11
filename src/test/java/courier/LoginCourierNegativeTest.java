@@ -2,19 +2,22 @@ package courier;
 
 import io.qameta.allure.Description;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-import org.junit.Before;
+import io.restassured.response.ValidatableResponse;
+import org.courier.CourierChecks;
+import org.courier.CourierClient;
+import org.courier.Login;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
 public class LoginCourierNegativeTest {
+
+    private final CourierClient client = new CourierClient();
+    private final CourierChecks check = new CourierChecks();
     @Parameterized.Parameter()
     public String login;
 
@@ -26,11 +29,6 @@ public class LoginCourierNegativeTest {
 
     @Parameterized.Parameter(3)
     public String message;
-
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "http://qa-scooter.praktikum-services.ru/";
-    }
 
     @Parameterized.Parameters(name = "login: {0}, password: {1}, firstName: {2}, statusCode: {3}, message: {4}")
     public static Object[][] params() {
@@ -44,12 +42,10 @@ public class LoginCourierNegativeTest {
     @Test
     @DisplayName("Login courier without 1 element and not existing name")
     @Description("Negative test for login courier")
-    public void testCheckUserNameAndPrintResponseBody() {
-
-        Login login1 = new Login(login, password);
-        Response response = given().contentType(ContentType.JSON).body(login1).when().post("/api/v1/courier/login");
-        response.then().statusCode(statusCode).assertThat().body("message",equalTo(message));
-        System.out.println(response.body().asString());
-
+    public void testCheckUserNameAndResponseBody() {
+        Login creds = new Login(login, password);
+        ValidatableResponse loginResponse = client.logIn(creds);
+        var messageResponse= check.loggedInUnsuccessfully(loginResponse, statusCode);
+        assertThat(messageResponse, containsString(message));
     }
 }
