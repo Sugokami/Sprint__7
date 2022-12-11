@@ -26,7 +26,14 @@ public class CourierClient extends Client {
     }
 
     @Step("Delete courier")
-    public void delete(int courierId) {
+    public ValidatableResponse delete(int courierId) {
+        String json = String.format("{\"id\": \"%d\"}", courierId);
+
+        return spec()
+                .body(json)
+                .when()
+                .delete(ROOT + "/" + courierId)
+                .then().log().all();
 
     }
 }
